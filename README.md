@@ -37,11 +37,6 @@ Notas:
 - Un `.exe` solo funciona en el sistema donde se creó: para Mac o Linux hay que ejecutar PyInstaller en ese
   sistema (`python3 -m PyInstaller --onefile --name SistemaAcademico main.py`).
 
-## Antes de presentar: completar la carátula
-
-Abra `config.py`, busque la sección **DATOS DE LA CARÁTULA** y reemplace cada marcador `[MOLDE]`
-(universidad, curso, catedrático, fecha e integrantes con su carné). No hay que tocar nada más.
-
 ## Estructura del proyecto
 
 ```
