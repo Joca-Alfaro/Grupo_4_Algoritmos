@@ -1,0 +1,142 @@
+{
+    "version_formato": 1,
+    "fecha_guardado": "2026-10-10T08:05:04",
+    "estudiantes": [
+        {
+            "carne": "2024001",
+            "nombre": "Ana García",
+            "correo": "ana.garcia@correo.com"
+        },
+        {
+            "carne": "2024002",
+            "nombre": "Luis Pérez",
+            "correo": "luis.perez@correo.com"
+        },
+        {
+            "carne": "2024003",
+            "nombre": "María López",
+            "correo": "maria.lopez@correo.com"
+        },
+        {
+            "carne": "2024004",
+            "nombre": "José Hernández",
+            "correo": "jose.hernandez@correo.com"
+        }
+    ],
+    "profesores": [
+        {
+            "id_profesor": "P001",
+            "nombre": "Dr. Carlos Méndez",
+            "especialidad": "Ingeniería de Software"
+        },
+        {
+            "id_profesor": "P002",
+            "nombre": "Dra. Lucía Ramírez",
+            "especialidad": "Matemática Aplicada"
+        },
+        {
+            "id_profesor": "P003",
+            "nombre": "Ing. Roberto Castillo",
+            "especialidad": "Bases de Datos"
+        }
+    ],
+    "cursos": [
+        {
+            "codigo": "MAT101",
+            "nombre": "Matemática I",
+            "creditos": 5,
+            "id_profesor": "P002",
+            "prerrequisito": null
+        },
+        {
+            "codigo": "PRG101",
+            "nombre": "Programación I",
+            "creditos": 6,
+            "id_profesor": "P001",
+            "prerrequisito": null
+        },
+        {
+            "codigo": "MAT201",
+            "nombre": "Matemática II",
+            "creditos": 5,
+            "id_profesor": "P002",
+            "prerrequisito": "MAT101"
+        },
+        {
+            "codigo": "PRG201",
+            "nombre": "Programación II",
+            "creditos": 6,
+            "id_profesor": "P001",
+            "prerrequisito": "PRG101"
+        },
+        {
+            "codigo": "BDD201",
+            "nombre": "Bases de Datos",
+            "creditos": 5,
+            "id_profesor": "P003",
+            "prerrequisito": null
+        }
+    ],
+    "inscripciones": [
+        {
+            "carne": "2024001",
+            "codigo_curso": "MAT101",
+            "notas": {
+                "Parcial 1": 85.0,
+                "Parcial 2": 90.0,
+                "Proyecto": 88.0,
+                "Examen Final": 92.0
+            }
+        },
+        {
+            "carne": "2024001",
+            "codigo_curso": "PRG101",
+            "notas": {
+                "Parcial 1": 95.0,
+                "Parcial 2": 90.0,
+                "Proyecto": 100.0,
+                "Examen Final": 94.0
+            }
+        },
+        {
+            "carne": "2024002",
+            "codigo_curso": "MAT101",
+            "notas": {
+                "Parcial 1": 40.0,
+                "Parcial 2": 55.0,
+                "Proyecto": 60.0,
+                "Examen Final": 45.0
+            }
+        },
+        {
+            "carne": "2024003",
+            "codigo_curso": "MAT101",
+            "notas": {
+                "Parcial 1": 65.0,
+                "Parcial 2": 62.0,
+                "Proyecto": 70.0,
+                "Examen Final": 61.0
+            }
+        },
+        {
+            "carne": "2024003",
+            "codigo_curso": "PRG101",
+            "notas": {
+                "Parcial 1": 78.0,
+                "Parcial 2": 82.0
+            }
+        },
+        {
+            "carne": "2024001",
+            "codigo_curso": "MAT201",
+            "notas": {
+                "Parcial 1": 90.0
+            }
+        },
+        {
+            "carne": "2024004",
+            "codigo_curso": "BDD201",
+            "notas": {}
+        }
+    ]
+}
