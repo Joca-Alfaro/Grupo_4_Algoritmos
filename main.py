@@ -21,7 +21,7 @@ import os
 import sys
 
 from config import RUTA_DATOS_POR_DEFECTO
-from excepciones import ErrorGestion
+from excepciones import ErrorGestion, OperacionCancelada
 from interfaz.caratula import mostrar_caratula
 from interfaz.menu import (
     OPCION_SALIR,
@@ -29,7 +29,8 @@ from interfaz.menu import (
     mostrar_menu,
     numero_maximo_opcion,
 )
-from interfaz.opciones import imprimir_resumen_datos, opcion_cargar_datos_prueba
+from interfaz.opciones_datos import opcion_cargar_datos_prueba
+from interfaz.presentacion import imprimir_resumen_datos
 from servicios.persistencia import cargar_desde_json, guardar_en_json
 from servicios.sistema_gestion import SistemaGestion
 from utilidades.consola import confirmar, input_validado, limpiar_pantalla, pausar
@@ -98,9 +99,11 @@ def main() -> None:
     """Bucle principal: muestra el menú y ejecuta la opción elegida.
 
     Cada opción se ejecuta dentro de un try/except:
-      - ErrorGestion      -> error de regla de negocio o de archivos (mensaje amigable).
-      - KeyboardInterrupt -> Ctrl+C: cancela la operación y vuelve al menú.
-      - Exception         -> cualquier error inesperado, para no tumbar el sistema.
+      - OperacionCancelada -> el usuario escribió 'cancelar': se vuelve al menú
+                              sin pausa y sin haber aplicado nada a medias.
+      - ErrorGestion       -> error de regla de negocio o de archivos (mensaje amigable).
+      - KeyboardInterrupt  -> Ctrl+C: igual que cancelar.
+      - Exception          -> cualquier error inesperado, para no tumbar el sistema.
     """
     configurar_consola()
     sistema = SistemaGestion()
@@ -116,8 +119,8 @@ def main() -> None:
     except ErrorGestion as error:
         print(f"\n  [ERROR] {error}")
         pausar()
-    except KeyboardInterrupt:
-        print()
+    except (OperacionCancelada, KeyboardInterrupt):
+        print()  # si cancela aquí, simplemente se continúa al menú
 
     # --- Bucle del menú principal ---
     while True:
@@ -128,6 +131,7 @@ def main() -> None:
                 int,
                 minimo=OPCION_SALIR,
                 maximo=maximo,
+                permitir_cancelar=False,  # en el menú no tiene sentido cancelar
             )
 
             if opcion == OPCION_SALIR:
@@ -138,10 +142,14 @@ def main() -> None:
 
             acciones[opcion](sistema)
 
+        except (OperacionCancelada, KeyboardInterrupt):
+            # Cancelación voluntaria: se limpia la pantalla, se avisa y se
+            # vuelve DIRECTO al menú (sin pedir ENTER).
+            limpiar_pantalla()
+            print("\n  Operación cancelada. No se realizó ningún cambio.")
+            continue
         except ErrorGestion as error:
             print(f"\n  [ERROR] {error}")
-        except KeyboardInterrupt:
-            print("\n\n  Operación cancelada. Volviendo al menú...")
         except Exception as error:  # red de seguridad ante errores inesperados
             print(f"\n  [ERROR INESPERADO] {type(error).__name__}: {error}")
 

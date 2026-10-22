@@ -72,14 +72,14 @@ if abs(sum(EVALUACIONES.values()) - 100.0) > 1e-9:
 # Solo es necesario editar este bloque; la carátula se arma sola a partir de él.
 
 NOMBRE_UNIVERSIDAD: str = "UNIVERSIDAD MARIANO GALVEZ DE GUATEMALA"
-NOMBRE_CURSO: str = "ALGORITOMOS"
+NOMBRE_CURSO: str = "ALGORITMOS"
 NOMBRE_CATEDRATICO: str = "ING. DEMSHILL COUTIÑO"
-FECHA_PRESENTACION: str = "30 DE OCTUBRE DE 2026"
+FECHA_PRESENTACION: str = "31/10/2026"
 
 # Lista de integrantes: cada elemento es una tupla (nombre, carné).
 INTEGRANTES: List[Tuple[str, str]] = [
     ("JOSE CARLOS ALFARO GARCIA", "0906-26-9140"),
-    ("MARVIN MAIKEL GONZALEZ", "0906-26-1010"),
-    ("THELMA", "0906-26-2020"),
-    ("SEPA COMO SE LLAM LA OTRA", "0906-26-3030"),
+    ("MARVIN MICHAEL GONZÁLEZ DE LEÓN", "0906-26-"),
+    # ("[MOLDE] Nombre del integrante 3", "[MOLDE]"),
+    # ("[MOLDE] Nombre del integrante 4", "[MOLDE]"),
 ]

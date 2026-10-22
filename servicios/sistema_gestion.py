@@ -13,10 +13,37 @@ y devuelve resultados o lanza ErrorGestion. Así se puede probar de forma
 automática y reutilizar con cualquier interfaz.
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from excepciones import ErrorGestion, ErrorPersistencia
 from modelos import Curso, Estudiante, Inscripcion, Profesor
+from utilidades.validadores import es_correo_valido
+
+
+class _SinCambio:
+    """Tipo del valor especial SIN_CAMBIO (solo existe una instancia)."""
+
+    def __repr__(self) -> str:
+        return "SIN_CAMBIO"
+
+
+# Valor especial para los métodos modificar_*: significa "no cambies este dato".
+# Se necesita porque None ya tiene significado propio en algunos campos
+# (por ejemplo, un curso SIN prerrequisito tiene prerrequisito=None).
+SIN_CAMBIO = _SinCambio()
+
+
+def _texto_modificado(nuevo: Any, actual: str, campo: str) -> str:
+    """Devuelve el texto resultante de una modificación (validado).
+
+    Si `nuevo` es SIN_CAMBIO se conserva el valor actual; de lo contrario
+    debe ser un texto no vacío (se le quitan los espacios sobrantes).
+    """
+    if nuevo is SIN_CAMBIO:
+        return actual
+    if not isinstance(nuevo, str) or not nuevo.strip():
+        raise ErrorGestion(f"El {campo} no puede estar vacío.")
+    return nuevo.strip()
 
 
 class SistemaGestion:
@@ -68,6 +95,8 @@ class SistemaGestion:
         """Registra un estudiante nuevo; el carné debe ser único."""
         if carne in self.estudiantes:
             raise ErrorGestion(f"Ya existe un estudiante con el carné '{carne}'.")
+        if not es_correo_valido(correo):
+            raise ErrorGestion(f"El correo '{correo}' no tiene un formato válido.")
         estudiante = Estudiante(carne, nombre, correo)
         self.estudiantes[carne] = estudiante
         self.cambios_sin_guardar = True
@@ -78,6 +107,41 @@ class SistemaGestion:
         if carne not in self.estudiantes:
             raise ErrorGestion(f"No existe un estudiante con el carné '{carne}'.")
         return self.estudiantes[carne]
+
+    def modificar_estudiante(
+        self, carne: str, nombre: Any = SIN_CAMBIO, correo: Any = SIN_CAMBIO
+    ) -> Estudiante:
+        """Modifica el nombre y/o el correo de un estudiante.
+
+        El carné NO se puede modificar: es la clave con la que se enlazan sus
+        inscripciones y notas. Solo se cambian los datos indicados; los demás
+        se conservan. Primero se valida todo y luego se aplica, de modo que si
+        un dato es inválido no se aplica ningún cambio.
+        """
+        estudiante = self.obtener_estudiante(carne)
+        nuevo_nombre = _texto_modificado(nombre, estudiante.nombre, "nombre")
+        nuevo_correo = _texto_modificado(correo, estudiante.correo, "correo")
+        if not es_correo_valido(nuevo_correo):
+            raise ErrorGestion(f"El correo '{nuevo_correo}' no tiene un formato válido.")
+
+        if (nuevo_nombre, nuevo_correo) != (estudiante.nombre, estudiante.correo):
+            estudiante.nombre = nuevo_nombre
+            estudiante.correo = nuevo_correo
+            self.cambios_sin_guardar = True
+        return estudiante
+
+    def eliminar_estudiante(self, carne: str) -> int:
+        """Elimina un estudiante junto con todas sus inscripciones y notas.
+
+        Retorna la cantidad de inscripciones que se eliminaron en cascada.
+        """
+        self.obtener_estudiante(carne)
+        claves = [clave for clave in self.inscripciones if clave[0] == carne]
+        for clave in claves:
+            del self.inscripciones[clave]
+        del self.estudiantes[carne]
+        self.cambios_sin_guardar = True
+        return len(claves)
 
     # ==========================================================================
     # PROFESORES
@@ -96,6 +160,41 @@ class SistemaGestion:
         if id_profesor not in self.profesores:
             raise ErrorGestion(f"No existe un profesor con el ID '{id_profesor}'.")
         return self.profesores[id_profesor]
+
+    def modificar_profesor(
+        self, id_profesor: str, nombre: Any = SIN_CAMBIO, especialidad: Any = SIN_CAMBIO
+    ) -> Profesor:
+        """Modifica el nombre y/o la especialidad de un profesor.
+
+        El ID NO se puede modificar (los cursos lo usan como referencia).
+        Se valida todo antes de aplicar cualquier cambio.
+        """
+        profesor = self.obtener_profesor(id_profesor)
+        nuevo_nombre = _texto_modificado(nombre, profesor.nombre, "nombre")
+        nueva_especialidad = _texto_modificado(especialidad, profesor.especialidad, "especialidad")
+
+        if (nuevo_nombre, nueva_especialidad) != (profesor.nombre, profesor.especialidad):
+            profesor.nombre = nuevo_nombre
+            profesor.especialidad = nueva_especialidad
+            self.cambios_sin_guardar = True
+        return profesor
+
+    def cursos_de_profesor(self, id_profesor: str) -> List[Curso]:
+        """Lista los cursos que tiene asignados un profesor."""
+        self.obtener_profesor(id_profesor)
+        return [c for c in self.cursos.values() if c.id_profesor == id_profesor]
+
+    def eliminar_profesor(self, id_profesor: str) -> List[str]:
+        """Elimina un profesor; sus cursos quedan "Sin asignar".
+
+        Retorna los códigos de los cursos que se quedaron sin profesor.
+        """
+        afectados = self.cursos_de_profesor(id_profesor)
+        for curso in afectados:
+            curso.id_profesor = None
+        del self.profesores[id_profesor]
+        self.cambios_sin_guardar = True
+        return [curso.codigo for curso in afectados]
 
     # ==========================================================================
     # CURSOS
@@ -133,6 +232,115 @@ class SistemaGestion:
         if codigo not in self.cursos:
             raise ErrorGestion(f"No existe un curso con el código '{codigo}'.")
         return self.cursos[codigo]
+
+    def _cadena_incluye(self, inicio: str, buscado: str) -> bool:
+        """True si, siguiendo la cadena de prerrequisitos desde `inicio`
+        (incluido), se llega al curso `buscado`.
+
+        Sirve para detectar ciclos: si el nuevo prerrequisito de un curso ya
+        depende (directa o indirectamente) de ese mismo curso, se formaría un
+        ciclo. El conjunto `visitados` evita bucles infinitos.
+        """
+        actual: Optional[str] = inicio
+        visitados = set()
+        while actual and actual not in visitados:
+            if actual == buscado:
+                return True
+            visitados.add(actual)
+            curso = self.cursos.get(actual)
+            actual = curso.prerrequisito if curso else None
+        return False
+
+    def cursos_posibles_prerrequisito(self, codigo: str) -> List[Curso]:
+        """Cursos que se pueden usar como prerrequisito de `codigo`.
+
+        Se excluyen el propio curso y los que dependen de él, porque
+        formarían un ciclo.
+        """
+        self.obtener_curso(codigo)
+        return [
+            c for c in self.cursos.values()
+            if c.codigo != codigo and not self._cadena_incluye(c.codigo, codigo)
+        ]
+
+    def cursos_que_dependen_de(self, codigo: str) -> List[Curso]:
+        """Cursos que tienen a `codigo` como prerrequisito directo."""
+        self.obtener_curso(codigo)
+        return [c for c in self.cursos.values() if c.prerrequisito == codigo]
+
+    def modificar_curso(
+        self,
+        codigo: str,
+        nombre: Any = SIN_CAMBIO,
+        creditos: Any = SIN_CAMBIO,
+        prerrequisito: Any = SIN_CAMBIO,
+        id_profesor: Any = SIN_CAMBIO,
+    ) -> Curso:
+        """Modifica los datos de un curso.
+
+        El código NO se puede modificar (inscripciones y otros cursos lo usan
+        como referencia). Para quitar el prerrequisito o el profesor se pasa
+        None; para dejarlos igual, SIN_CAMBIO. Se valida todo antes de aplicar
+        cualquier cambio, así que un dato inválido no deja el curso a medias.
+        """
+        curso = self.obtener_curso(codigo)
+        nuevo_nombre = _texto_modificado(nombre, curso.nombre, "nombre")
+
+        nuevos_creditos = curso.creditos
+        if creditos is not SIN_CAMBIO:
+            if isinstance(creditos, bool) or not isinstance(creditos, int) or creditos <= 0:
+                raise ErrorGestion("Los créditos deben ser un número entero mayor que cero.")
+            nuevos_creditos = creditos
+
+        nuevo_prerrequisito = curso.prerrequisito
+        if prerrequisito is not SIN_CAMBIO:
+            if prerrequisito is not None:
+                if prerrequisito == codigo:
+                    raise ErrorGestion("Un curso no puede ser prerrequisito de sí mismo.")
+                if prerrequisito not in self.cursos:
+                    raise ErrorGestion(f"El prerrequisito '{prerrequisito}' no existe.")
+                if self._cadena_incluye(prerrequisito, codigo):
+                    raise ErrorGestion(
+                        f"'{prerrequisito}' ya depende de '{codigo}': "
+                        "ese prerrequisito formaría un ciclo."
+                    )
+            nuevo_prerrequisito = prerrequisito
+
+        nuevo_profesor = curso.id_profesor
+        if id_profesor is not SIN_CAMBIO:
+            if id_profesor is not None:
+                self.obtener_profesor(id_profesor)  # valida que exista
+            nuevo_profesor = id_profesor
+
+        nuevos = (nuevo_nombre, nuevos_creditos, nuevo_prerrequisito, nuevo_profesor)
+        if nuevos != (curso.nombre, curso.creditos, curso.prerrequisito, curso.id_profesor):
+            curso.nombre, curso.creditos, curso.prerrequisito, curso.id_profesor = nuevos
+            self.cambios_sin_guardar = True
+        return curso
+
+    def eliminar_curso(self, codigo: str) -> int:
+        """Elimina un curso junto con sus inscripciones y notas.
+
+        No se permite si otros cursos lo tienen como prerrequisito: primero
+        hay que modificar esos cursos. Así no se alteran en silencio las
+        reglas del pensum.
+
+        Retorna la cantidad de inscripciones que se eliminaron en cascada.
+        """
+        self.obtener_curso(codigo)
+        dependientes = self.cursos_que_dependen_de(codigo)
+        if dependientes:
+            lista = ", ".join(c.codigo for c in dependientes)
+            raise ErrorGestion(
+                f"No se puede eliminar '{codigo}': es prerrequisito de {lista}. "
+                "Modifique primero esos cursos."
+            )
+        claves = [clave for clave in self.inscripciones if clave[1] == codigo]
+        for clave in claves:
+            del self.inscripciones[clave]
+        del self.cursos[codigo]
+        self.cambios_sin_guardar = True
+        return len(claves)
 
     def asignar_profesor(self, codigo_curso: str, id_profesor: str) -> None:
         """Asigna (o reasigna) el profesor responsable de un curso."""
@@ -195,6 +403,17 @@ class SistemaGestion:
             )
         return inscripcion
 
+    def retirar_estudiante(self, carne: str, codigo_curso: str) -> Inscripcion:
+        """Elimina la inscripción de un estudiante en un curso (con sus notas).
+
+        Después podrá volver a inscribirse, porque la pareja deja de existir.
+        Retorna la inscripción eliminada (para informar cuántas notas se perdieron).
+        """
+        inscripcion = self.obtener_inscripcion(carne, codigo_curso)
+        del self.inscripciones[(carne, codigo_curso)]
+        self.cambios_sin_guardar = True
+        return inscripcion
+
     # ==========================================================================
     # CALIFICACIONES
     # ==========================================================================
@@ -211,6 +430,16 @@ class SistemaGestion:
         inscripcion.registrar_nota(evaluacion, nota)  # valida el rango
         self.cambios_sin_guardar = True
         return era_modificacion
+
+    def eliminar_calificacion(self, carne: str, codigo_curso: str, evaluacion: str) -> None:
+        """Elimina la nota de una evaluación; esa evaluación queda sin nota.
+
+        El promedio y el estado del curso se recalculan solos la próxima vez
+        que se consulten (nunca se guardan calculados).
+        """
+        inscripcion = self.obtener_inscripcion(carne, codigo_curso)
+        inscripcion.eliminar_nota(evaluacion)
+        self.cambios_sin_guardar = True
 
     # ==========================================================================
     # CONSULTAS PARA REPORTES

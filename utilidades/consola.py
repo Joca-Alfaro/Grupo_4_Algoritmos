@@ -12,7 +12,12 @@ correcto, de modo que el programa nunca se cae por una entrada inválida.
 import math
 import os
 import sys
-from typing import Callable, Optional
+from typing import Callable, Container, Optional
+
+from excepciones import OperacionCancelada
+
+# Palabra que el usuario escribe en cualquier pregunta para abandonar la operación
+PALABRA_CANCELAR = "cancelar"
 
 
 def limpiar_pantalla() -> None:
@@ -37,6 +42,7 @@ def input_validado(
     permitir_vacio: bool = False,
     validador: Optional[Callable[[str], bool]] = None,
     mensaje_validador: str = "El valor ingresado no es válido.",
+    permitir_cancelar: bool = True,
 ):
     """Captura una entrada del usuario a prueba de fallos.
 
@@ -50,9 +56,15 @@ def input_validado(
         validador        : función opcional que recibe el texto y devuelve
                            True si es válido (por ejemplo, formato de correo).
         mensaje_validador: mensaje de error cuando el validador falla.
+        permitir_cancelar: si es True, escribir 'cancelar' (en mayúsculas o
+                           minúsculas) lanza OperacionCancelada para abandonar
+                           la operación. El menú principal lo desactiva.
 
     Retorna:
         El valor convertido al tipo pedido, o None si se permitió vacío.
+
+    Lanza:
+        OperacionCancelada si el usuario escribió 'cancelar'.
     """
     while True:
         # --- Lectura de la entrada ---
@@ -62,6 +74,10 @@ def input_validado(
             # Sin entrada disponible no se puede reintentar: se sale limpiamente
             print("\nEntrada finalizada. Cerrando el programa.")
             sys.exit(0)
+
+        # --- Cancelación: se revisa antes que cualquier otra validación ---
+        if permitir_cancelar and texto.lower() == PALABRA_CANCELAR:
+            raise OperacionCancelada()
 
         # --- Manejo de entradas vacías ---
         if texto == "":
@@ -112,6 +128,26 @@ def pedir_id(mensaje: str) -> str:
         validador=lambda t: " " not in t,
         mensaje_validador="el identificador no debe contener espacios.",
     )
+
+
+def pedir_id_nuevo(mensaje: str, existentes: Container[str], entidad: str) -> str:
+    """Pide un identificador NUEVO: si ya existe, avisa y vuelve a preguntar.
+
+    Así, si el usuario se equivoca y escribe un carné repetido, no pierde la
+    operación: puede escribir otro o escribir 'cancelar'.
+
+    Parámetros:
+        mensaje    : texto de la pregunta.
+        existentes : colección con los identificadores ya registrados.
+        entidad    : cómo nombrar lo que ya existe en el aviso
+                     (por ejemplo, "un estudiante").
+    """
+    while True:
+        valor = pedir_id(mensaje)
+        if valor not in existentes:
+            return valor
+        print(f"  [!] Error: ya existe {entidad} con el identificador '{valor}'. "
+              "Escriba otro o 'cancelar'.")
 
 
 def confirmar(mensaje: str) -> bool:

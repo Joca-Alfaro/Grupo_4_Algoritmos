@@ -4,55 +4,82 @@ interfaz/menu.py
 ================
 Definición y presentación del menú principal.
 
-El menú se describe UNA sola vez en la lista SECCIONES. A partir de ella se
-dibuja el menú en pantalla y se construye la tabla {número: función} que usa
-el bucle principal. Para agregar una opción nueva basta añadir una línea aquí.
+El menú se describe UNA sola vez en la lista SECCIONES. Los números de opción
+se asignan automáticamente en el orden en que aparecen, y a partir de esa
+misma lista se dibuja el menú y se arma la tabla {número: función} que usa
+el bucle principal. Para agregar una opción nueva basta añadir una línea.
 """
 
-from typing import Callable, Dict
+from typing import Callable, Dict, List, Tuple
 
-from interfaz import opciones as op
+from interfaz import opciones_cursos as cursos
+from interfaz import opciones_datos as datos
+from interfaz import opciones_estudiantes as estudiantes
+from interfaz import opciones_inscripciones as inscripciones
+from interfaz import opciones_profesores as profesores
+from interfaz import opciones_reportes as reportes
 
 # Número de la opción que cierra el programa
 OPCION_SALIR = 0
 
-# Cada sección: (título, [(número, texto, función), ...])
-SECCIONES = [
+# Cada sección: (título, [(texto, función), ...]). Sin números: se asignan solos.
+SECCIONES: List[Tuple[str, List[Tuple[str, Callable]]]] = [
     ("Estudiantes", [
-        (1, "Registrar estudiante", op.opcion_registrar_estudiante),
-        (2, "Consultar estudiantes", op.opcion_listar_estudiantes),
+        ("Registrar estudiante", estudiantes.opcion_registrar_estudiante),
+        ("Consultar estudiantes", estudiantes.opcion_listar_estudiantes),
+        ("Modificar estudiante", estudiantes.opcion_modificar_estudiante),
+        ("Eliminar estudiante", estudiantes.opcion_eliminar_estudiante),
     ]),
     ("Profesores", [
-        (3, "Registrar profesor", op.opcion_registrar_profesor),
-        (4, "Consultar profesores", op.opcion_listar_profesores),
+        ("Registrar profesor", profesores.opcion_registrar_profesor),
+        ("Consultar profesores", profesores.opcion_listar_profesores),
+        ("Modificar profesor", profesores.opcion_modificar_profesor),
+        ("Eliminar profesor", profesores.opcion_eliminar_profesor),
     ]),
     ("Cursos", [
-        (5, "Registrar curso", op.opcion_registrar_curso),
-        (6, "Consultar cursos", op.opcion_listar_cursos),
-        (7, "Asignar profesor a un curso", op.opcion_asignar_profesor),
+        ("Registrar curso", cursos.opcion_registrar_curso),
+        ("Consultar cursos", cursos.opcion_listar_cursos),
+        ("Modificar curso", cursos.opcion_modificar_curso),
+        ("Eliminar curso", cursos.opcion_eliminar_curso),
+        ("Asignar profesor a un curso", cursos.opcion_asignar_profesor),
     ]),
     ("Inscripciones y calificaciones", [
-        (8, "Inscribir estudiante en un curso", op.opcion_inscribir),
-        (9, "Registrar / modificar calificación", op.opcion_registrar_calificacion),
+        ("Inscribir estudiante en un curso", inscripciones.opcion_inscribir),
+        ("Retirar estudiante de un curso", inscripciones.opcion_retirar_estudiante),
+        ("Registrar / modificar calificación", inscripciones.opcion_registrar_calificacion),
+        ("Eliminar calificación", inscripciones.opcion_eliminar_calificacion),
     ]),
     ("Reportes", [
-        (10, "Cursos inscritos de un estudiante", op.opcion_cursos_de_estudiante),
-        (11, "Estudiantes inscritos en un curso", op.opcion_estudiantes_de_curso),
-        (12, "Historial académico de un estudiante", op.opcion_historial),
+        ("Cursos inscritos de un estudiante", reportes.opcion_cursos_de_estudiante),
+        ("Estudiantes inscritos en un curso", reportes.opcion_estudiantes_de_curso),
+        ("Historial académico de un estudiante", reportes.opcion_historial),
     ]),
     ("Datos (archivos JSON)", [
-        (13, "Guardar datos en archivo JSON", op.opcion_guardar_datos),
-        (14, "Cargar datos desde archivo JSON", op.opcion_cargar_datos),
-        (15, "Cargar datos de prueba", op.opcion_cargar_datos_prueba),
+        ("Guardar datos en archivo JSON", datos.opcion_guardar_datos),
+        ("Cargar datos desde archivo JSON", datos.opcion_cargar_datos),
+        ("Cargar datos de prueba", datos.opcion_cargar_datos_prueba),
     ]),
 ]
+
+
+def _numerar() -> List[Tuple[str, List[Tuple[int, str, Callable]]]]:
+    """Asigna a cada opción su número (1, 2, 3...) siguiendo el orden de SECCIONES."""
+    numerado = []
+    siguiente = 1
+    for titulo, opciones in SECCIONES:
+        filas = []
+        for texto, funcion in opciones:
+            filas.append((siguiente, texto, funcion))
+            siguiente += 1
+        numerado.append((titulo, filas))
+    return numerado
 
 
 def construir_acciones() -> Dict[int, Callable]:
     """Devuelve el diccionario {número de opción: función a ejecutar}."""
     acciones = {}
-    for _, opciones in SECCIONES:
-        for numero, _, funcion in opciones:
+    for _, filas in _numerar():
+        for numero, _, funcion in filas:
             acciones[numero] = funcion
     return acciones
 
@@ -67,9 +94,10 @@ def mostrar_menu() -> None:
     print("\n" + "=" * 62)
     print("                    MENÚ PRINCIPAL")
     print("=" * 62)
-    for titulo, opciones in SECCIONES:
+    for titulo, filas in _numerar():
         print(f"  --- {titulo} ---")
-        for numero, texto, _ in opciones:
+        for numero, texto, _ in filas:
             print(f"  {numero:>2}. {texto}")
     print(f"  {OPCION_SALIR:>2}. Salir")
     print("=" * 62)
+    print("  Consejo: en cualquier operación escriba 'cancelar' para volver aquí.")

@@ -54,6 +54,15 @@ class Inscripcion:
             )
         self.notas[evaluacion] = float(nota)
 
+    def eliminar_nota(self, evaluacion: str) -> None:
+        """Elimina la nota de una evaluación (la deja como "sin nota").
+
+        Lanza ErrorGestion si esa evaluación no tenía nota registrada.
+        """
+        if evaluacion not in self.notas:
+            raise ErrorGestion(f"La evaluación '{evaluacion}' no tiene nota registrada.")
+        del self.notas[evaluacion]
+
     def esta_completa(self) -> bool:
         """Indica si ya se registraron TODAS las evaluaciones del curso."""
         return all(evaluacion in self.notas for evaluacion in EVALUACIONES)

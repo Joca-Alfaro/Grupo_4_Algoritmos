@@ -19,6 +19,18 @@ class ErrorGestion(Exception):
     """
 
 
+class OperacionCancelada(Exception):
+    """El usuario escribió 'cancelar' y quiere abandonar la operación en curso.
+
+    NO es un error: es la forma de volver al menú principal a mitad de un
+    registro, modificación o eliminación. Por eso NO hereda de ErrorGestion
+    (así un `except ErrorGestion` no la captura por accidente).
+
+    Como todas las operaciones piden primero todos los datos y solo al final
+    los aplican, cancelar nunca deja un registro a medias.
+    """
+
+
 class ErrorPersistencia(ErrorGestion):
     """Error al guardar o cargar datos desde un archivo JSON.
 

@@ -1,0 +1,29 @@
+{
+    "version_formato": 1,
+    "fecha_guardado": "2026-10-21T23:44:17",
+    "estudiantes": [
+        {
+            "carne": "001",
+            "nombre": "Jose Carlos Alfaro García",
+            "correo": "jalfaro@gmail.com"
+        },
+        {
+            "carne": "002",
+            "nombre": "Osmar Mejia",
+            "correo": "os@gmail.com"
+        },
+        {
+            "carne": "003",
+            "nombre": "Ashley Melissa Bonilla",
+            "correo": "ash@gmail.com"
+        },
+        {
+            "carne": "004",
+            "nombre": "Marvin Maikel Gonzalez",
+            "correo": "maik@gmail.com"
+        }
+    ],
+    "profesores": [],
+    "cursos": [],
+    "inscripciones": []
+}
