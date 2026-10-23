@@ -122,7 +122,7 @@ profesor o curso, el programa muestra una **lista numerada** y solo se escribe e
 
 ```
   Seleccione el estudiante a modificar:
-     1. [2024001] Ana García - ana.garcia@correo.com
+     1. [0906264094] Marvin Gonzalez - mgonzalezd16@miumg.edu.gt
      2. [2024002] Luis Pérez - luis.perez@correo.com
 
 Número (1-2) o 'cancelar':
