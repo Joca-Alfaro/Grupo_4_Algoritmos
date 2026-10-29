@@ -1,6 +1,6 @@
 {
     "version_formato": 1,
-    "fecha_guardado": "2026-10-21T23:44:17",
+    "fecha_guardado": "2026-10-28T23:43:44",
     "estudiantes": [
         {
             "carne": "001",
@@ -21,9 +21,80 @@
             "carne": "004",
             "nombre": "Marvin Maikel Gonzalez",
             "correo": "maik@gmail.com"
+        },
+        {
+            "carne": "005",
+            "nombre": "Telma de Lucas y de Reyes",
+            "correo": "telmadelucas@gmail.com"
         }
     ],
-    "profesores": [],
-    "cursos": [],
-    "inscripciones": []
+    "profesores": [
+        {
+            "id_profesor": "001",
+            "nombre": "ING. DEMSHILL",
+            "especialidad": "INGENIERO"
+        },
+        {
+            "id_profesor": "002",
+            "nombre": "ING. MARCO TULIO",
+            "especialidad": "INGENIERO"
+        },
+        {
+            "id_profesor": "003",
+            "nombre": "ING. CLAUDIO LOPEZ",
+            "especialidad": "INGENIERO"
+        },
+        {
+            "id_profesor": "004",
+            "nombre": "ING. MARROQUIN",
+            "especialidad": "INGENIERO"
+        }
+    ],
+    "cursos": [
+        {
+            "codigo": "001",
+            "nombre": "ALGORITMOS",
+            "creditos": 20,
+            "id_profesor": "001",
+            "prerrequisito": null
+        },
+        {
+            "codigo": "002",
+            "nombre": "DISCRETA",
+            "creditos": 20,
+            "id_profesor": "002",
+            "prerrequisito": null
+        },
+        {
+            "codigo": "003",
+            "nombre": "PRE CALCULO",
+            "creditos": 20,
+            "id_profesor": "003",
+            "prerrequisito": null
+        },
+        {
+            "codigo": "004",
+            "nombre": "CALCULO 1",
+            "creditos": 20,
+            "id_profesor": "004",
+            "prerrequisito": "003"
+        }
+    ],
+    "inscripciones": [
+        {
+            "carne": "005",
+            "codigo_curso": "003",
+            "notas": {
+                "Parcial 1": 1.0,
+                "Parcial 2": 0.0,
+                "Proyecto": 50.0,
+                "Examen Final": 100.0
+            }
+        },
+        {
+            "carne": "005",
+            "codigo_curso": "002",
+            "notas": {}
+        }
+    ]
 }
