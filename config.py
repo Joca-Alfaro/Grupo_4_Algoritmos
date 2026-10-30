@@ -81,5 +81,5 @@ INTEGRANTES: List[Tuple[str, str]] = [
     ("JOSE CARLOS ALFARO GARCIA", "0906-26-9140"),
     ("MARVIN MICHAEL GONZÁLEZ DE LEÓN", "0906-26-"),
     ("ROSA MARIA FUENTES DE LEON", "0906-26-13867"),
-    # ("[MOLDE] Nombre del integrante 4", "[MOLDE]"),
+    ("TELMA YESENIA MELGAR HERNANDEZ", "0906-26-10285"),
 ]
