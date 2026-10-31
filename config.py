@@ -68,8 +68,7 @@ if abs(sum(EVALUACIONES.values()) - 100.0) > 1e-9:
 # ==============================================================================
 # DATOS DE LA CARÁTULA
 # ==============================================================================
-# Reemplace cada marcador [MOLDE] con la información real del equipo.
-# Solo es necesario editar este bloque; la carátula se arma sola a partir de él.
+
 
 NOMBRE_UNIVERSIDAD: str = "UNIVERSIDAD MARIANO GALVEZ DE GUATEMALA"
 NOMBRE_CURSO: str = "ALGORITMOS"
